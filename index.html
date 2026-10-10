@@ -56,26 +56,34 @@
 
 <body>
 
+  <!-- チャットボタン -->
   <div id="shortcut-container" class="shortcut-container">
     <button id="btn-open-chat" class="btn-chat">
       💬 チャットを開く
     </button>
   </div>
 
+  <!-- iframe -->
   <iframe id="tester-iframe"></iframe>
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
+
+      // ========================================
+      // 要素取得
+      // ========================================
 
       const iframe = document.getElementById("tester-iframe");
       const chatBtn = document.getElementById("btn-open-chat");
       const container = document.getElementById("shortcut-container");
 
       // ========================================
-      // プロキシ設定
+      // 設定
       // ========================================
 
       const PROXY_BASE = "https://renderproxy-pre1.onrender.com/";
+
+      const CHAT_URL = "https://knj48-ver-chatsystem.onrender.com/";
 
       // ========================================
       // クエリパラメータ取得
@@ -83,13 +91,15 @@
 
       const params = new URLSearchParams(window.location.search);
 
-      // ?url= の値
       let queryUrl = params.get("url");
 
-      // ?proxy が存在するか
+      // ?proxy があるか
       const useProxy = params.has("proxy");
 
       let targetUrl;
+
+      // チャット表示中かどうか
+      let isChatOpen = false;
 
       // ========================================
       // URLパラメータがある場合
@@ -99,6 +109,7 @@
 
         queryUrl = queryUrl.trim();
 
+        // 空欄の場合
         if (queryUrl === "") {
           queryUrl = "https://example.com";
         }
@@ -109,7 +120,7 @@
 
         // ========================================
         // URLパラメータがない場合
-        // 通常通りプロンプト表示
+        // プロンプト表示
         // ========================================
 
         let inputUrl = prompt(
@@ -117,9 +128,13 @@
         );
 
         if (inputUrl === null || inputUrl.trim() === "") {
+
           inputUrl = "example.com";
+
         } else {
+
           inputUrl = inputUrl.trim();
+
         }
 
         targetUrl = inputUrl;
@@ -133,7 +148,9 @@
         !targetUrl.startsWith("https://") &&
         !targetUrl.startsWith("http://")
       ) {
+
         targetUrl = "https://" + targetUrl;
+
       }
 
       // ========================================
@@ -148,14 +165,16 @@
         let binary = "";
 
         for (const byte of bytes) {
+
           binary += String.fromCharCode(byte);
+
         }
 
         return btoa(binary);
       }
 
       // ========================================
-      // 最終URL生成
+      // プロキシURL生成
       // ========================================
 
       let finalUrl = targetUrl;
@@ -169,29 +188,38 @@
       }
 
       // ========================================
-      // iframe読み込み
+      // チャットボタン表示制御
       // ========================================
 
-      iframe.addEventListener("load", () => {
+      function updateChatButton() {
 
-        try {
+        // チャット表示中なら必ず非表示
+        if (isChatOpen) {
 
-          // 元のURLがexample.comなら表示
-          if (targetUrl.includes("example.com")) {
+          container.style.display = "none";
+          return;
 
-            container.style.display = "block";
+        }
 
-          } else {
+        // example.comの場合のみ表示
+        if (targetUrl.includes("example.com")) {
 
-            container.style.display = "none";
+          container.style.display = "block";
 
-          }
-
-        } catch (e) {
+        } else {
 
           container.style.display = "none";
 
         }
+      }
+
+      // ========================================
+      // iframe読み込み完了
+      // ========================================
+
+      iframe.addEventListener("load", () => {
+
+        updateChatButton();
 
       });
 
@@ -201,14 +229,19 @@
 
       chatBtn.addEventListener("click", () => {
 
-        iframe.src = "https://knj48-ver-chatsystem.onrender.com/";
+        // チャット表示中に変更
+        isChatOpen = true;
 
+        // ボタンを即座に非表示
         container.style.display = "none";
+
+        // チャットをiframeで開く
+        iframe.src = CHAT_URL;
 
       });
 
       // ========================================
-      // iframe表示
+      // iframe表示開始
       // ========================================
 
       iframe.src = finalUrl;
