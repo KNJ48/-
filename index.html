@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学習用資料閲覧システム</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #f3f4f6;
+      font-family: sans-serif;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .shortcut-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 9999;
+      display: none;
+    }
+
+    .btn-chat {
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .btn-chat:hover {
+      background-color: #4338ca;
+    }
+
+    .btn-chat:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="shortcut-container" class="shortcut-container">
+    <button id="btn-open-chat" class="btn-chat">
+      💬 チャットを開く
+    </button>
+  </div>
+
+  <iframe id="tester-iframe"></iframe>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const iframe = document.getElementById("tester-iframe");
+      const chatBtn = document.getElementById("btn-open-chat");
+      const container = document.getElementById("shortcut-container");
+
+      // ========================================
+      // URLパラメータ取得
+      // ========================================
+
+      const requestUrl = new URL(window.location.href);
+
+      let queryUrl = requestUrl.searchParams.get("url");
+
+      // ========================================
+      // ?url= が存在する場合のみ処理
+      // ========================================
+
+      if (queryUrl !== null) {
+        queryUrl = queryUrl.trim();
+
+        // 空の場合は example.com
+        if (queryUrl === "") {
+          queryUrl = "https://example.com";
+        }
+
+        // https:// / http:// がなければ追加
+        else if (
+          !queryUrl.startsWith("https://") &&
+          !queryUrl.startsWith("http://")
+        ) {
+          queryUrl = "https://" + queryUrl;
+        }
+      }
+
+      let targetUrl;
+
+      // ========================================
+      // URLパラメータがある場合
+      // ========================================
+
+      if (queryUrl !== null) {
+
+        // ?url= を最優先
+        targetUrl = queryUrl;
+
+      } else {
+
+        // ========================================
+        // URLパラメータがない場合
+        // プロンプトを表示
+        // ========================================
+
+        let inputUrl = prompt(
+          "テストしたいURLを入力してください（キャンセル・無入力なら example.com）："
+        );
+
+        if (inputUrl === null || inputUrl.trim() === "") {
+          inputUrl = "example.com";
+        } else {
+          inputUrl = inputUrl.trim();
+        }
+
+        // https:// / http:// がなければ追加
+        if (
+          !inputUrl.startsWith("https://") &&
+          !inputUrl.startsWith("http://")
+        ) {
+          inputUrl = "https://" + inputUrl;
+        }
+
+        targetUrl = inputUrl;
+      }
+
+      // ========================================
+      // iframe読み込み
+      // ========================================
+
+      iframe.addEventListener("load", () => {
+        try {
+          if (iframe.src.includes("example.com")) {
+            container.style.display = "block";
+          } else {
+            container.style.display = "none";
+          }
+        } catch (e) {
+          container.style.display = "none";
+        }
+      });
+
+      // ========================================
+      // チャットボタン
+      // ========================================
+
+      chatBtn.addEventListener("click", () => {
+        iframe.src = "https://knj48-ver-chatsystem.onrender.com/";
+      });
+
+      // ========================================
+      // 最終的なURLを表示
+      // ========================================
+
+      iframe.src = targetUrl;
+    });
+  </script>
+
+</body>
+</html>
