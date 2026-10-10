@@ -66,38 +66,28 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
+
       const iframe = document.getElementById("tester-iframe");
       const chatBtn = document.getElementById("btn-open-chat");
       const container = document.getElementById("shortcut-container");
 
       // ========================================
-      // URLパラメータ取得
+      // プロキシ設定
       // ========================================
 
-      const requestUrl = new URL(window.location.href);
-
-      let queryUrl = requestUrl.searchParams.get("url");
+      const PROXY_BASE = "https://renderproxy-pre1.onrender.com/";
 
       // ========================================
-      // ?url= が存在する場合のみ処理
+      // クエリパラメータ取得
       // ========================================
 
-      if (queryUrl !== null) {
-        queryUrl = queryUrl.trim();
+      const params = new URLSearchParams(window.location.search);
 
-        // 空の場合は example.com
-        if (queryUrl === "") {
-          queryUrl = "https://example.com";
-        }
+      // ?url= の値
+      let queryUrl = params.get("url");
 
-        // https:// / http:// がなければ追加
-        else if (
-          !queryUrl.startsWith("https://") &&
-          !queryUrl.startsWith("http://")
-        ) {
-          queryUrl = "https://" + queryUrl;
-        }
-      }
+      // ?proxy が存在するか
+      const useProxy = params.has("proxy");
 
       let targetUrl;
 
@@ -107,14 +97,19 @@
 
       if (queryUrl !== null) {
 
-        // ?url= を最優先
+        queryUrl = queryUrl.trim();
+
+        if (queryUrl === "") {
+          queryUrl = "https://example.com";
+        }
+
         targetUrl = queryUrl;
 
       } else {
 
         // ========================================
         // URLパラメータがない場合
-        // プロンプトを表示
+        // 通常通りプロンプト表示
         // ========================================
 
         let inputUrl = prompt(
@@ -127,15 +122,50 @@
           inputUrl = inputUrl.trim();
         }
 
-        // https:// / http:// がなければ追加
-        if (
-          !inputUrl.startsWith("https://") &&
-          !inputUrl.startsWith("http://")
-        ) {
-          inputUrl = "https://" + inputUrl;
+        targetUrl = inputUrl;
+      }
+
+      // ========================================
+      // URL正規化
+      // ========================================
+
+      if (
+        !targetUrl.startsWith("https://") &&
+        !targetUrl.startsWith("http://")
+      ) {
+        targetUrl = "https://" + targetUrl;
+      }
+
+      // ========================================
+      // Base64変換
+      // 日本語URL対応
+      // ========================================
+
+      function encodeBase64(str) {
+
+        const bytes = new TextEncoder().encode(str);
+
+        let binary = "";
+
+        for (const byte of bytes) {
+          binary += String.fromCharCode(byte);
         }
 
-        targetUrl = inputUrl;
+        return btoa(binary);
+      }
+
+      // ========================================
+      // 最終URL生成
+      // ========================================
+
+      let finalUrl = targetUrl;
+
+      if (useProxy) {
+
+        const encodedUrl = encodeBase64(targetUrl);
+
+        finalUrl = PROXY_BASE + encodedUrl;
+
       }
 
       // ========================================
@@ -143,15 +173,26 @@
       // ========================================
 
       iframe.addEventListener("load", () => {
+
         try {
-          if (iframe.src.includes("example.com")) {
+
+          // 元のURLがexample.comなら表示
+          if (targetUrl.includes("example.com")) {
+
             container.style.display = "block";
+
           } else {
+
             container.style.display = "none";
+
           }
+
         } catch (e) {
+
           container.style.display = "none";
+
         }
+
       });
 
       // ========================================
@@ -159,14 +200,19 @@
       // ========================================
 
       chatBtn.addEventListener("click", () => {
+
         iframe.src = "https://knj48-ver-chatsystem.onrender.com/";
+
+        container.style.display = "none";
+
       });
 
       // ========================================
-      // 最終的なURLを表示
+      // iframe表示
       // ========================================
 
-      iframe.src = targetUrl;
+      iframe.src = finalUrl;
+
     });
   </script>
 
