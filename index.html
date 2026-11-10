@@ -51,11 +51,46 @@
     .btn-chat:active {
       transform: scale(0.95);
     }
+
+    .iframe-warning {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 100%;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .iframe-warning h1 {
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+
+    .iframe-warning p {
+      margin: 0 0 20px;
+      color: #4b5563;
+    }
+
+    .iframe-warning a {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 20px;
+      background-color: #4f46e5;
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .iframe-warning a:hover {
+      background-color: #4338ca;
+    }
   </style>
 </head>
 
 <body>
-
   <!-- チャットボタン -->
   <div id="shortcut-container" class="shortcut-container">
     <button id="btn-open-chat" class="btn-chat">
@@ -68,6 +103,32 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
+      // このページ自体がiframe内で開かれている場合
+      if (window.self !== window.top) {
+        document.body.replaceChildren();
+
+        const warning = document.createElement("main");
+        warning.className = "iframe-warning";
+
+        const heading = document.createElement("h1");
+        heading.textContent = "Don't open in Iframe";
+
+        const description = document.createElement("p");
+        description.textContent =
+          "このページは新しいタブで開いてください。";
+
+        const link = document.createElement("a");
+        link.href = window.location.href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Open in new tab";
+
+        warning.append(heading, description, link);
+        document.body.appendChild(warning);
+
+        // 通常の処理を実行しない
+        return;
+      }
 
       // ========================================
       // 要素取得
@@ -82,7 +143,6 @@
       // ========================================
 
       const PROXY_BASE = "https://renderproxy-production.up.railway.app/";
-
       const CHAT_URL = "https://knj48-ver-chatsystem.onrender.com/";
 
       // ========================================
@@ -90,51 +150,35 @@
       // ========================================
 
       const params = new URLSearchParams(window.location.search);
-
       let queryUrl = params.get("url");
 
       // ?proxy があるか
       const useProxy = params.has("proxy");
 
       let targetUrl;
-
-      // チャット表示中かどうか
       let isChatOpen = false;
 
       // ========================================
-      // URLパラメータがある場合
+      // 表示するURLを決定
       // ========================================
 
       if (queryUrl !== null) {
-
         queryUrl = queryUrl.trim();
 
-        // 空欄の場合
         if (queryUrl === "") {
           queryUrl = "https://example.com";
         }
 
         targetUrl = queryUrl;
-
       } else {
-
-        // ========================================
-        // URLパラメータがない場合
-        // プロンプト表示
-        // ========================================
-
         let inputUrl = prompt(
           "テストしたいURLを入力してください（キャンセル・無入力なら example.com）："
         );
 
         if (inputUrl === null || inputUrl.trim() === "") {
-
           inputUrl = "example.com";
-
         } else {
-
           inputUrl = inputUrl.trim();
-
         }
 
         targetUrl = inputUrl;
@@ -148,26 +192,19 @@
         !targetUrl.startsWith("https://") &&
         !targetUrl.startsWith("http://")
       ) {
-
         targetUrl = "https://" + targetUrl;
-
       }
 
       // ========================================
-      // Base64変換
-      // 日本語URL対応
+      // Base64変換（日本語URL対応）
       // ========================================
 
       function encodeBase64(str) {
-
         const bytes = new TextEncoder().encode(str);
-
         let binary = "";
 
         for (const byte of bytes) {
-
           binary += String.fromCharCode(byte);
-
         }
 
         return btoa(binary);
@@ -180,11 +217,8 @@
       let finalUrl = targetUrl;
 
       if (useProxy) {
-
         const encodedUrl = encodeBase64(targetUrl);
-
         finalUrl = PROXY_BASE + encodedUrl;
-
       }
 
       // ========================================
@@ -192,24 +226,15 @@
       // ========================================
 
       function updateChatButton() {
-
-        // チャット表示中なら必ず非表示
         if (isChatOpen) {
-
           container.style.display = "none";
           return;
-
         }
 
-        // example.comの場合のみ表示
         if (targetUrl.includes("example.com")) {
-
           container.style.display = "block";
-
         } else {
-
           container.style.display = "none";
-
         }
       }
 
@@ -218,9 +243,7 @@
       // ========================================
 
       iframe.addEventListener("load", () => {
-
         updateChatButton();
-
       });
 
       // ========================================
@@ -228,16 +251,9 @@
       // ========================================
 
       chatBtn.addEventListener("click", () => {
-
-        // チャット表示中に変更
         isChatOpen = true;
-
-        // ボタンを即座に非表示
         container.style.display = "none";
-
-        // チャットをiframeで開く
         iframe.src = CHAT_URL;
-
       });
 
       // ========================================
@@ -245,9 +261,7 @@
       // ========================================
 
       iframe.src = finalUrl;
-
     });
   </script>
-
 </body>
 </html>
